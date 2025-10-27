@@ -17,10 +17,246 @@ class PTP_Shop_Component {
         add_action('init', array($this, 'init'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
         add_shortcode('ptp_shop', array($this, 'render_shop_shortcode'));
+        add_action('rest_api_init', array($this, 'register_rest_routes'));
     }
     
     public function init() {
         // Initialize any necessary hooks
+    }
+    
+    public function register_rest_routes() {
+        register_rest_route('ptp/v1', '/winter-products', array(
+            'methods' => 'GET',
+            'callback' => array($this, 'get_winter_products'),
+            'permission_callback' => '__return_true'
+        ));
+    }
+    
+    public function get_winter_products($request) {
+        // Sample camp data with proper structure for the frontend
+        $camps = array(
+            array(
+                'id' => 1,
+                'name' => 'PTP Select Camp — Main Line',
+                'permalink' => '#main-line',
+                'prices' => array(
+                    'price' => 49900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg',
+                        'alt' => 'PTP Select Camp Main Line'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'main-line', 'name' => 'Main Line'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'elite', 'name' => 'Elite')
+                ),
+                'venue' => array(
+                    'lat' => '40.040',
+                    'lng' => '-75.391',
+                    'name' => 'Main Line Sports Center',
+                    'address' => 'Main Line, PA'
+                ),
+                'loc_tag' => 'main-line'
+            ),
+            array(
+                'id' => 2,
+                'name' => 'PTP Select Camp — Princeton',
+                'permalink' => '#princeton',
+                'prices' => array(
+                    'price' => 49900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg',
+                        'alt' => 'PTP Select Camp Princeton'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'princeton', 'name' => 'Princeton'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'girls', 'name' => 'Girls')
+                ),
+                'venue' => array(
+                    'lat' => '40.357',
+                    'lng' => '-74.667',
+                    'name' => 'Princeton Sports Center',
+                    'address' => 'Princeton, NJ'
+                ),
+                'loc_tag' => 'princeton'
+            ),
+            array(
+                'id' => 3,
+                'name' => 'PTP Select Camp — Scarsdale',
+                'permalink' => '#scarsdale',
+                'prices' => array(
+                    'price' => 49900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg',
+                        'alt' => 'PTP Select Camp Scarsdale'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'scarsdale', 'name' => 'Scarsdale'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'goalkeeper', 'name' => 'Goalkeeper')
+                ),
+                'venue' => array(
+                    'lat' => '41.005',
+                    'lng' => '-73.784',
+                    'name' => 'Scarsdale Sports Complex',
+                    'address' => 'Scarsdale, NY'
+                ),
+                'loc_tag' => 'scarsdale'
+            ),
+            array(
+                'id' => 4,
+                'name' => 'PTP Select Camp — West Chester',
+                'permalink' => '#west-chester',
+                'prices' => array(
+                    'price' => 39900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg',
+                        'alt' => 'PTP Select Camp West Chester'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'west-chester', 'name' => 'West Chester'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'one-day', 'name' => 'One-Day')
+                ),
+                'venue' => array(
+                    'lat' => '39.960',
+                    'lng' => '-75.605',
+                    'name' => 'West Chester Sports Center',
+                    'address' => 'West Chester, PA'
+                ),
+                'loc_tag' => 'west-chester'
+            ),
+            array(
+                'id' => 5,
+                'name' => 'PTP Select Camp — Doylestown',
+                'permalink' => '#doylestown',
+                'prices' => array(
+                    'price' => 44900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg',
+                        'alt' => 'PTP Select Camp Doylestown'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'doylestown', 'name' => 'Doylestown'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'indoor', 'name' => 'Indoor')
+                ),
+                'venue' => array(
+                    'lat' => '40.310',
+                    'lng' => '-75.130',
+                    'name' => 'Doylestown Indoor Sports',
+                    'address' => 'Doylestown, PA'
+                ),
+                'loc_tag' => 'doylestown'
+            ),
+            array(
+                'id' => 6,
+                'name' => 'PTP Select Camp — Media',
+                'permalink' => '#media',
+                'prices' => array(
+                    'price' => 39900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg',
+                        'alt' => 'PTP Select Camp Media'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'media', 'name' => 'Media'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'outdoor', 'name' => 'Outdoor')
+                ),
+                'venue' => array(
+                    'lat' => '39.916',
+                    'lng' => '-75.387',
+                    'name' => 'Media Sports Complex',
+                    'address' => 'Media, PA'
+                ),
+                'loc_tag' => 'media'
+            ),
+            array(
+                'id' => 7,
+                'name' => 'PTP Select Camp — Short Hills',
+                'permalink' => '#short-hills',
+                'prices' => array(
+                    'price' => 49900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg',
+                        'alt' => 'PTP Select Camp Short Hills'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'short-hills', 'name' => 'Short Hills'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'pro-guest', 'name' => 'Pro Guest')
+                ),
+                'venue' => array(
+                    'lat' => '40.747',
+                    'lng' => '-74.325',
+                    'name' => 'Short Hills Sports Center',
+                    'address' => 'Short Hills, NJ'
+                ),
+                'loc_tag' => 'short-hills'
+            ),
+            array(
+                'id' => 8,
+                'name' => 'PTP Select Camp — Hockessin',
+                'permalink' => '#hockessin',
+                'prices' => array(
+                    'price' => 39900,
+                    'currency_code' => 'USD'
+                ),
+                'images' => array(
+                    array(
+                        'src' => 'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg',
+                        'alt' => 'PTP Select Camp Hockessin'
+                    )
+                ),
+                'tags' => array(
+                    array('slug' => 'hockessin', 'name' => 'Hockessin'),
+                    array('slug' => 'winter', 'name' => 'Winter'),
+                    array('slug' => 'elite', 'name' => 'Elite')
+                ),
+                'venue' => array(
+                    'lat' => '39.787',
+                    'lng' => '-75.691',
+                    'name' => 'Hockessin Sports Complex',
+                    'address' => 'Hockessin, DE'
+                ),
+                'loc_tag' => 'hockessin'
+            )
+        );
+        
+        return array(
+            'items' => $camps,
+            'total' => count($camps)
+        );
     }
     
     public function enqueue_scripts() {
