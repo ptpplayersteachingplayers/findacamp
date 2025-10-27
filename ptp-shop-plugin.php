@@ -16,6 +16,8 @@ class PTP_Shop_Component {
     public function __construct() {
         add_action('init', array($this, 'init'));
         add_action('wp_enqueue_scripts', array($this, 'enqueue_scripts'));
+        // Public REST endpoints for the front-end components
+        add_action('rest_api_init', array($this, 'register_rest_routes'));
         add_shortcode('ptp_shop', array($this, 'render_shop_shortcode'));
     }
     
@@ -725,6 +727,207 @@ class PTP_Shop_Component {
         <!-- /PTP — Revolve‑Style Shop + ZIP Prompt + State Tabs -->
         <?php
         return ob_get_clean();
+    }
+
+    /**
+     * Register REST API routes used by the Find-a-Camp component.
+     */
+    public function register_rest_routes() {
+        register_rest_route(
+            'ptp/v1',
+            '/winter-products',
+            array(
+                'methods'             => 'GET',
+                'callback'            => array($this, 'rest_get_products'),
+                'permission_callback' => '__return_true',
+                'args'                => array(
+                    'limit'     => array(
+                        'type'    => 'integer',
+                        'default' => 200,
+                        'minimum' => 1,
+                        'maximum' => 500,
+                    ),
+                    'category'  => array(
+                        'type' => 'array',
+                        'items' => array('type' => 'string'),
+                    ),
+                    'categories' => array(
+                        'type' => 'array',
+                        'items' => array('type' => 'string'),
+                    ),
+                    'tag'       => array(
+                        'type' => 'array',
+                        'items' => array('type' => 'string'),
+                    ),
+                    'season'    => array(
+                        'type' => 'string',
+                        'enum' => array('winter','summer','all'),
+                    ),
+                ),
+            )
+        );
+    }
+
+    /**
+     * REST callback: return products shaped for the Find‑a‑Camp component.
+     * Response shape: { items: [ { name, permalink, prices:{price,currency_code}, images:[{src}], tags:[{slug,name}], venue:{lat,lng,name,address}, loc_tag } ] }
+     */
+    public function rest_get_products( $request ) {
+        if ( ! function_exists('wc_get_products') ) {
+            return new WP_Error('woocommerce_missing', 'WooCommerce not available', array('status' => 501));
+        }
+
+        $limit = (int) $request->get_param('limit');
+        if ($limit < 1) { $limit = 200; }
+        if ($limit > 500) { $limit = 500; }
+
+        // Categories filter: default to Winter Clinics + Summer if present
+        $season = $request->get_param('season');
+        $defaultCategorySlugs = array('winter-clinics','summer');
+        if ($season === 'winter') { $defaultCategorySlugs = array('winter-clinics'); }
+        elseif ($season === 'summer') { $defaultCategorySlugs = array('summer'); }
+
+        $categorySlugs = $request->get_param('category');
+        if (empty($categorySlugs)) {
+            $categorySlugs = $request->get_param('categories');
+        }
+        if (empty($categorySlugs) || !is_array($categorySlugs)) {
+            $categorySlugs = $defaultCategorySlugs;
+        }
+
+        $tagSlugs = $request->get_param('tag');
+        if (!is_array($tagSlugs)) { $tagSlugs = array(); }
+
+        $queryArgs = array(
+            'status'   => 'publish',
+            'limit'    => $limit,
+            'orderby'  => 'menu_order',
+            'order'    => 'ASC',
+            'return'   => 'objects',
+            'paginate' => false,
+        );
+        if (!empty($categorySlugs)) {
+            $queryArgs['category'] = array_values(array_filter(array_map('sanitize_title', (array)$categorySlugs)));
+        }
+        if (!empty($tagSlugs)) {
+            $queryArgs['tag'] = array_values(array_filter(array_map('sanitize_title', (array)$tagSlugs)));
+        }
+
+        $products = wc_get_products($queryArgs);
+
+        $currency = function_exists('get_woocommerce_currency') ? get_woocommerce_currency() : 'USD';
+
+        $items = array();
+        foreach ($products as $product) {
+            // Basic fields
+            $name      = html_entity_decode( wp_strip_all_tags( $product->get_name() ) );
+            $permalink = get_permalink( $product->get_id() );
+
+            // Price in cents
+            $priceFloat = (float) $product->get_price();
+            $priceCents = (int) round($priceFloat * 100);
+
+            // Image (main)
+            $imageSrc = '';
+            $imageId  = $product->get_image_id();
+            if ($imageId) {
+                $imageSrc = wp_get_attachment_image_url($imageId, 'large');
+            } else {
+                $gallery = $product->get_gallery_image_ids();
+                if (!empty($gallery)) {
+                    $imageSrc = wp_get_attachment_image_url($gallery[0], 'large');
+                }
+            }
+
+            // Tags
+            $tagsOut = array();
+            $tagIds = wc_get_product_term_ids($product->get_id(), 'product_tag');
+            if (is_array($tagIds)) {
+                foreach ($tagIds as $tid) {
+                    $term = get_term($tid, 'product_tag');
+                    if ($term && !is_wp_error($term)) {
+                        $tagsOut[] = array(
+                            'slug' => (string) $term->slug,
+                            'name' => (string) $term->name,
+                        );
+                    }
+                }
+            }
+
+            // Venue (optional via meta); tolerates multiple potential meta keys
+            $venue = $this->build_venue_payload($product->get_id());
+
+            // loc_tag fallback: first known location tag present on product
+            $locTag = $this->derive_location_tag_from_terms($tagsOut);
+
+            $items[] = array(
+                'id'        => (int) $product->get_id(),
+                'name'      => $name,
+                'permalink' => $permalink,
+                'prices'    => array(
+                    'price'         => $priceCents,
+                    'currency_code' => $currency,
+                ),
+                'images'    => $imageSrc ? array(array('src' => $imageSrc)) : array(),
+                'tags'      => $tagsOut,
+                'venue'     => $venue,
+                'loc_tag'   => $locTag,
+            );
+        }
+
+        $response = array(
+            'count' => count($items),
+            'items' => $items,
+        );
+        return rest_ensure_response($response);
+    }
+
+    /**
+     * Attempt to build a venue payload with lat/lng from common meta keys.
+     */
+    private function build_venue_payload($postId) {
+        // Candidate meta keys (adjust to match your site if needed)
+        $latKeys = array('_ptp_lat','ptp_lat','_venue_lat','venue_lat','_ptp_venue_lat','ptp_venue_lat','_latitude','latitude');
+        $lngKeys = array('_ptp_lng','ptp_lng','_venue_lng','venue_lng','_ptp_venue_lng','ptp_venue_lng','_longitude','longitude');
+        $nameKeys = array('ptp_venue_name','_ptp_venue_name','venue_name','_venue_name');
+        $addrKeys = array('ptp_venue_address','_ptp_venue_address','venue_address','_venue_address','address');
+
+        $lat = null; $lng = null; $vname = ''; $vaddr = '';
+        foreach ($latKeys as $k) { $v = get_post_meta($postId, $k, true); if ($v !== '' && $v !== null) { $lat = (float) $v; break; } }
+        foreach ($lngKeys as $k) { $v = get_post_meta($postId, $k, true); if ($v !== '' && $v !== null) { $lng = (float) $v; break; } }
+        foreach ($nameKeys as $k){ $v = get_post_meta($postId, $k, true); if ($v) { $vname = (string) $v; break; } }
+        foreach ($addrKeys as $k){ $v = get_post_meta($postId, $k, true); if ($v) { $vaddr = (string) $v; break; } }
+
+        // Sanity check coordinates
+        if ($lat !== null && $lng !== null) {
+            if ($lat < -90 || $lat > 90 || $lng < -180 || $lng > 180) {
+                $lat = null; $lng = null; // invalid, drop
+            }
+        }
+
+        $out = array('lat' => '', 'lng' => '', 'name' => '', 'address' => '');
+        if ($lat !== null && $lng !== null) { $out['lat'] = $lat; $out['lng'] = $lng; }
+        if ($vname) { $out['name'] = $vname; }
+        if ($vaddr) { $out['address'] = $vaddr; }
+        return $out;
+    }
+
+    /**
+     * From product tag terms, derive first matching market/location slug used by the front-end.
+     */
+    private function derive_location_tag_from_terms($terms) {
+        $known = array(
+            'main-line','west-chester','doylestown','media',
+            'princeton','short-hills','ridgewood',
+            'hockessin','greenville',
+            'scarsdale','rye','garden-city'
+        );
+        $knownSet = array_fill_keys($known, true);
+        foreach ((array)$terms as $t) {
+            $slug = isset($t['slug']) ? strtolower($t['slug']) : '';
+            if ($slug !== '' && isset($knownSet[$slug])) return $slug;
+        }
+        return '';
     }
 }
 
