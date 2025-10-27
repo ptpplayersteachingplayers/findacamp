@@ -1,0 +1,275 @@
+<!-- ✅ PTP — FIND A CAMP (Google Maps + ZIP Finder) -->
+<!-- Drop this in a Gutenberg "Custom HTML" block. Set data-gmaps-key and (optionally) data-endpoint. -->
+<section id="ptp-find-camp" class="alignfull" aria-label="Find a PTP Camp Near You">
+  <style>
+    #ptp-find-camp{--y:#FCB900;--ink:#0e0f11;--muted:#6b7280;--soft:#f8fafc;--b:#e5e7eb;--r:14px;--shadow:0 10px 30px rgba(0,0,0,.07);--pad:clamp(16px,4vw,28px);--max:1180px}
+    #ptp-find-camp,*{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+    #ptp-find-camp.alignfull{width:100vw;margin-left:calc(50% - 50vw);margin-right:calc(50% - 50vw)}
+
+    .wrap{max-width:var(--max);margin:0 auto;padding:var(--pad)}
+
+    /* Hero */
+    .hero{position:relative;display:grid;gap:10px;padding:clamp(28px,6vw,48px) var(--pad);background:#0e0f11;color:#fff}
+    .hero h1{margin:0;font-size:clamp(1.8rem,5vw,3rem);line-height:1.07;font-weight:900}
+    .hero p{margin:0;color:#e8e9ea;max-width:880px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .chip{display:inline-flex;align-items:center;gap:.45rem;border:1px solid rgba(255,255,255,.25);border-radius:999px;padding:.45rem .8rem;background:rgba(255,255,255,.05);backdrop-filter:blur(4px);font-weight:600}
+
+    /* Controls */
+    .controls{background:#fff}
+    .controls .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .input{flex:1;min-width:160px;border:1px solid var(--b);border-radius:999px;padding:.8rem 1rem}
+    .select{border:1px solid var(--b);border-radius:999px;padding:.8rem 1rem;background:#fff}
+    .btn{border:1px solid #111;border-radius:999px;padding:.8rem 1rem;font-weight:800;cursor:pointer}
+    .btn.primary{background:#111;color:#fff}
+    .btn.secondary{background:#fff;color:#111}
+    .status{color:var(--muted);font-size:.95rem;margin-top:6px}
+
+    /* Tabs */
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .tab{border:1px solid var(--b);border-radius:999px;padding:.45rem .8rem;background:#fff;cursor:pointer}
+    .tab.active{border-color:#111;box-shadow:inset 0 0 0 1px #111}
+
+    /* Map */
+    .mapwrap{margin-top:14px;border:1px solid var(--b);border-radius:var(--r);overflow:hidden;background:#f8fafc}
+    #map{width:100%;height:420px}
+
+    /* Results */
+    .summary{display:flex;justify-content:space-between;align-items:center;margin-top:16px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:14px}
+    @media(min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+    @media(min-width:1024px){.grid{grid-template-columns:1fr 1fr 1fr}}
+
+    .card{display:flex;flex-direction:column;border:1px solid var(--b);border-radius:var(--r);overflow:hidden;background:#fff;box-shadow:var(--shadow)}
+    .media{aspect-ratio:16/10;background:#f2f4f7}
+    .media img{width:100%;height:100%;object-fit:cover;display:block}
+    .body{padding:14px}
+    .h3{font-weight:900;margin:0 0 6px;font-size:1.02rem}
+    .meta{display:flex;flex-wrap:wrap;gap:8px;color:var(--muted);font-size:.92rem;margin:0 0 10px}
+    .dist{margin-left:auto;color:#111;font-weight:700}
+    .tags{display:flex;flex-wrap:wrap;gap:6px}
+    .tag{font-size:.8rem;border:1px solid var(--b);border-radius:999px;padding:.25rem .55rem;color:#111}
+    .cta{display:flex;gap:10px;margin-top:10px}
+    .btn-cta{flex:1;display:inline-flex;justify-content:center;align-items:center;border:none;border-radius:12px;padding:.8rem 1rem;background:var(--y);color:#111;font-weight:800;text-decoration:none}
+
+    .empty{padding:24px;border:1px dashed var(--b);border-radius:var(--r);background:#fff;color:var(--muted);margin-top:14px}
+
+    /* Diagnostics */
+    details.diag{margin-top:14px;border:1px dashed var(--b);border-radius:var(--r);padding:10px;background:#fff}
+    details.diag summary{cursor:pointer;font-weight:700}
+    .kv{display:grid;grid-template-columns:160px 1fr;gap:6px;font-size:.9rem;color:#333}
+  </style>
+
+  <!-- HERO -->
+  <div class="hero alignfull">
+    <div class="wrap">
+      <h1>Find a PTP Camp Near You</h1>
+      <p>Mentorship-first training led by NCAA players and pros. Enter your ZIP, pick a radius, and see locations near you.</p>
+      <div class="chips">
+        <span class="chip">✅ Fully Insured</span>
+        <span class="chip">🧠 Mentorship-First</span>
+        <span class="chip">🛡️ Background-Checked</span>
+        <span class="chip">⚡ High-Reps, Small Groups</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONTROLS + MAP + RESULTS -->
+  <div class="controls">
+    <div class="wrap" data-gmaps-key="YOUR_GOOGLE_MAPS_API_KEY" data-endpoint="/wp-json/ptp/v1/winter-products">
+      <div class="bar" role="group" aria-label="Find camps by ZIP">
+        <input id="fc-zip" class="input" inputmode="numeric" maxlength="10" placeholder="ZIP or City (e.g., 19087)">
+        <select id="fc-radius" class="select" aria-label="Radius">
+          <option value="10">10 mi</option>
+          <option value="25" selected>25 mi</option>
+          <option value="50">50 mi</option>
+          <option value="100">100 mi</option>
+        </select>
+        <button id="fc-find" class="btn primary">Find Camps</button>
+        <button id="fc-geo" class="btn secondary">Use my location</button>
+        <button id="fc-demo" class="btn secondary" title="Use sample data to test the layout">Run demo</button>
+      </div>
+
+      <div class="tabs" aria-label="Filter by state">
+        <button class="tab active" data-state="all">All</button>
+        <button class="tab" data-state="PA">PA</button>
+        <button class="tab" data-state="NJ">NJ</button>
+        <button class="tab" data-state="DE">DE</button>
+        <button class="tab" data-state="NY">NY</button>
+      </div>
+
+      <div class="status" id="fc-status" aria-live="polite"></div>
+
+      <div class="mapwrap"><div id="map"></div></div>
+
+      <div class="summary"><span id="fc-summary-left">Showing 0 camps</span><span id="fc-summary-right"></span></div>
+
+      <div id="fc-grid" class="grid" role="list"></div>
+      <div id="fc-empty" class="empty" hidden>No camps match your filters. Try expanding the radius or clearing the state filter.</div>
+
+      <details class="diag">
+        <summary>Diagnostics</summary>
+        <div class="kv"><strong>Endpoint:</strong><span id="d-endpoint">(n/a)</span></div>
+        <div class="kv"><strong>Products loaded:</strong><span id="d-count">0</span></div>
+        <div class="kv"><strong>Last error:</strong><span id="d-err">(none)</span></div>
+      </details>
+    </div>
+  </div>
+
+  <script>
+  (function(){
+    const root = document.currentScript.closest('#ptp-find-camp');
+    const wrap = root.querySelector('.wrap[data-gmaps-key]');
+    const grid = root.querySelector('#fc-grid');
+    const empty = root.querySelector('#fc-empty');
+    const statusEl = root.querySelector('#fc-status');
+    const summL = root.querySelector('#fc-summary-left');
+    const summR = root.querySelector('#fc-summary-right');
+    const zipInput = root.querySelector('#fc-zip');
+    const radiusSel = root.querySelector('#fc-radius');
+    const btnFind = root.querySelector('#fc-find');
+    const btnGeo = root.querySelector('#fc-geo');
+    const btnDemo = root.querySelector('#fc-demo');
+    const tabs = Array.from(root.querySelectorAll('.tab'));
+
+    const diag = { ep: root.querySelector('#d-endpoint'), count: root.querySelector('#d-count'), err: root.querySelector('#d-err') };
+
+    // Known location tags → coordinates + state
+    const LOCS = {
+      'main-line':   {lat:40.040, lng:-75.391, label:'Main Line, PA', state:'PA'},
+      'west-chester':{lat:39.960, lng:-75.605, label:'West Chester, PA', state:'PA'},
+      'doylestown':  {lat:40.310, lng:-75.130, label:'Doylestown, PA', state:'PA'},
+      'media':       {lat:39.916, lng:-75.387, label:'Media, PA', state:'PA'},
+      'princeton':   {lat:40.357, lng:-74.667, label:'Princeton, NJ', state:'NJ'},
+      'short-hills': {lat:40.747, lng:-74.325, label:'Short Hills, NJ', state:'NJ'},
+      'ridgewood':   {lat:40.979, lng:-74.116, label:'Ridgewood, NJ', state:'NJ'},
+      'hockessin':   {lat:39.787, lng:-75.691, label:'Hockessin, DE', state:'DE'},
+      'greenville':  {lat:39.777, lng:-75.598, label:'Greenville, DE', state:'DE'},
+      'scarsdale':   {lat:41.005, lng:-73.784, label:'Scarsdale, NY', state:'NY'},
+      'rye':         {lat:40.980, lng:-73.683, label:'Rye, NY', state:'NY'},
+      'garden-city': {lat:40.726, lng:-73.634, label:'Garden City, NY', state:'NY'}
+    };
+    const VALID_LOCS = new Set(Object.keys(LOCS));
+
+    // Distance helpers
+    const toRad = d => d*Math.PI/180; const R=3958.8;
+    function distMiles(a,b){
+      const dLat = toRad(b.lat-a.lat), dLng = toRad(b.lng-a.lng);
+      const sa=Math.sin(dLat/2), sb=Math.sin(dLng/2);
+      const c=2*Math.asin(Math.sqrt(sa*sa + Math.cos(toRad(a.lat))*Math.cos(toRad(b.lat))*sb*sb));
+      return R*c;
+    }
+    const fmtMiles = m => (m<1)? `${(m*5280)|0} ft` : `${m.toFixed(1)} mi`;
+
+    // Fetch
+    async function j(url){ const r=await fetch(url,{credentials:'same-origin'}); if(!r.ok){ const e=new Error(`HTTP ${r.status}`); e.status=r.status; throw e;} return r.json(); }
+
+    async function fetchProducts(){
+      const ep = wrap.dataset.endpoint || '/wp-json/ptp/v1/winter-products';
+      diag.ep.textContent = ep; 
+      const data = await j(ep);
+      const items = Array.isArray(data.items) ? data.items : [];
+      diag.count.textContent = String(items.length);
+      return items;
+    }
+
+    // State filter
+    let activeState = 'all';
+    tabs.forEach(t=>t.addEventListener('click',()=>{
+      tabs.forEach(x=>x.classList.remove('active')); t.classList.add('active');
+      activeState = t.dataset.state || 'all';
+      render(currentProducts, lastUserCoords); updateMap(currentProducts, lastUserCoords);
+    }));
+
+    // Geocoder + Maps
+    let map, geocoder, markers=[], userMarker=null;
+    function loadMaps(){
+      return new Promise((resolve,reject)=>{
+        if(window.google && google.maps){ resolve(); return; }
+        window.__ptpInitMap = ()=> resolve();
+        const key = wrap.dataset.gmapsKey || 'YOUR_GOOGLE_MAPS_API_KEY';
+        const s = document.createElement('script');
+        s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(key)}&callback=__ptpInitMap`;
+        s.async=true; s.defer=true; s.onerror=()=>reject(new Error('Google Maps failed to load'));
+        document.head.appendChild(s);
+      });
+    }
+    function ensureMap(){ if(map) return; map = new google.maps.Map(document.getElementById('map'),{center:{lat:40.15,lng:-75.2},zoom:7,mapTypeControl:false,streetViewControl:false,fullscreenControl:true}); geocoder=new google.maps.Geocoder(); }
+
+    async function geocodeZip(q){
+      await loadMaps(); ensureMap();
+      return new Promise((resolve,reject)=>{
+        geocoder.geocode({address:q, componentRestrictions:{country:'US'}}, (res,status)=>{
+          if(status==='OK' && res && res[0]){
+            const p = res[0].geometry.location; resolve({lat:p.lat(), lng:p.lng()});
+          } else { reject(new Error('ZIP not found')); }
+        });
+      });
+    }
+
+    function clearMarkers(){ markers.forEach(m=>m.setMap(null)); markers=[]; if(userMarker){ userMarker.setMap(null); userMarker=null; } }
+
+    function updateMap(products, userCoords){
+      if(!window.google||!google.maps) return;
+      ensureMap(); clearMarkers(); const bounds = new google.maps.LatLngBounds();
+      (products||[]).forEach(p=>{ const pos = coordsFor(p); if(!pos) return; if(activeState!=='all' && pos.state!==activeState) return; const mk=new google.maps.Marker({position:{lat:pos.lat,lng:pos.lng}, map, title:p.name}); const html = `<div style="min-width:220px"><strong>${p.name.replace(/`/g,'&#96;')}</strong><br>${pos.label?`<em>${pos.label}</em><br>`:''}<a href="${p.permalink}" target="_blank" rel="noopener">View & Register</a></div>`; const iw = new google.maps.InfoWindow({content:html}); mk.addListener('click',()=>iw.open({anchor:mk,map})); markers.push(mk); bounds.extend(mk.getPosition()); });
+      if(userCoords){ const up = new google.maps.LatLng(userCoords.lat,userCoords.lng); userMarker = new google.maps.Marker({position:up,map,title:'You are here',icon:{path:google.maps.SymbolPath.CIRCLE,scale:6,strokeWeight:2,strokeColor:'#111',fillColor:'#FCB900',fillOpacity:1}}); bounds.extend(up); }
+      if(!bounds.isEmpty()) map.fitBounds(bounds,{top:28,right:28,bottom:28,left:28});
+    }
+
+    // Coords resolution hierarchy: venue lat/lng → loc_tag → tag-lookup
+    function coordsFor(p){
+      const v=p.venue||{}; if(v.lat && v.lng){ const lat=parseFloat(v.lat), lng=parseFloat(v.lng); if(Number.isFinite(lat)&&Number.isFinite(lng)) return {lat,lng,label:(v.name||v.address||''), state:guessStateFromLabel(v.name||v.address||'')}; }
+      const slug=(p.loc_tag||'').toLowerCase(); if(VALID_LOCS.has(slug)){ const b=LOCS[slug]; return {lat:b.lat,lng:b.lng,label:b.label,state:b.state}; }
+      const t=(p.tags||[]).find(t=>VALID_LOCS.has((t.slug||'').toLowerCase())); if(t){ const b=LOCS[t.slug.toLowerCase()]; return {lat:b.lat,lng:b.lng,label:b.label,state:b.state}; }
+      return null;
+    }
+    function guessStateFromLabel(s){ if(/\bPA\b|Pennsylvania/i.test(s)) return 'PA'; if(/\bNJ\b|New Jersey/i.test(s)) return 'NJ'; if(/\bDE\b|Delaware/i.test(s)) return 'DE'; if(/\bNY\b|New York/i.test(s)) return 'NY'; return 'all'; }
+
+    // Render cards
+    function render(list, user){
+      grid.innerHTML=''; let shown=0; const radius = parseFloat(radiusSel.value||'25');
+      list.forEach(p=>{
+        const pos=coordsFor(p); if(!pos) return; if(activeState!=='all' && pos.state!==activeState) return; let dist=null; if(user && pos){ dist = distMiles(user,pos); if(!isFinite(dist) || dist>radius) return; }
+        shown++;
+        const img=(p.images && p.images[0] && p.images[0].src)||''; const price=(p.prices&&p.prices.price)?(p.prices.price/100).toLocaleString(undefined,{style:'currency',currency:(p.prices.currency_code||'USD')}):''; const tags=p.tags||[];
+        const el=document.createElement('article'); el.className='card'; el.setAttribute('role','listitem'); el.innerHTML=`
+          <div class="media">${img?`<img src="${img}" alt="${p.name.replace(/"/g,'&quot;')}">`:''}</div>
+          <div class="body">
+            <h3 class="h3">${p.name}</h3>
+            <div class="meta">${price?`<span>${price}</span>`:''} ${pos&&pos.label?`<span>• ${pos.label}</span>`:''} ${dist!==null?`<span class="dist" title="Distance from you">${fmtMiles(dist)}</span>`:''}</div>
+            <div class="tags">${tags.map(t=>`<span class="tag">${t.name||t.slug}</span>`).join('')}</div>
+            <div class="cta"><a class="btn-cta" href="${p.permalink}" target="_blank" rel="noopener" aria-label="Register for ${p.name}">Register</a></div>
+          </div>`; grid.appendChild(el);
+      });
+      empty.hidden = shown>0; summL.textContent = shown+" camp"+(shown===1?'':'s')+ (activeState==='all'?'':` in ${activeState}`); summR.textContent = (user?`within ${radiusSel.value} mi`:'');
+    }
+
+    // State
+    function setStatus(s){ statusEl.textContent=s||''; }
+    function saveCoords(c){ try{ localStorage.setItem('ptp_user_coords', JSON.stringify(c)); }catch(e){} }
+    function loadCoords(){ try{ return JSON.parse(localStorage.getItem('ptp_user_coords')||'null'); }catch(e){ return null; } }
+
+    // Events
+    let currentProducts=[], lastUserCoords=null;
+    async function loadProducts(){ setStatus('Loading camps…'); diag.err.textContent='(none)'; try{ const prods=await fetchProducts(); currentProducts=prods; setStatus(`${prods.length} camps loaded.`); render(currentProducts, lastUserCoords); await loadMaps(); updateMap(currentProducts, lastUserCoords);}catch(e){ diag.err.textContent=e.message||String(e); setStatus('Could not load camps (endpoint unavailable). Use demo to test.'); }}
+
+    async function onFind(){ const q=(zipInput.value||'').trim(); if(!q){ setStatus('Enter a ZIP or city.'); return; } setStatus('Geocoding…'); try{ const c=await geocodeZip(q); lastUserCoords=c; saveCoords(c); setStatus('Sorting by distance…'); render(currentProducts, lastUserCoords); updateMap(currentProducts,lastUserCoords);}catch(e){ diag.err.textContent=e.message||String(e); setStatus('Location not found. Try a ZIP like 19087.'); }}
+
+    function onGeo(){ if(!navigator.geolocation){ setStatus('Geolocation not supported.'); return; } setStatus('Getting your location…'); navigator.geolocation.getCurrentPosition(async p=>{ lastUserCoords={lat:p.coords.latitude,lng:p.coords.longitude}; saveCoords(lastUserCoords); render(currentProducts,lastUserCoords); updateMap(currentProducts,lastUserCoords); setStatus('Sorted by your location.'); }, ()=> setStatus('Permission denied. Enter a ZIP instead.'), {enableHighAccuracy:false, timeout:10000}); }
+
+    btnFind.addEventListener('click', onFind); btnGeo.addEventListener('click', onGeo); radiusSel.addEventListener('change', ()=>{ render(currentProducts,lastUserCoords); updateMap(currentProducts,lastUserCoords); }); zipInput.addEventListener('keydown',e=>{ if(e.key==='Enter') onFind(); });
+
+    // Demo dataset (TEST CASES)
+    function demo(){ return [
+      { name:'PTP Select Camp — Main Line (Demo)', permalink:'#main-line', prices:{price:49900,currency_code:'USD'}, images:[{src:'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg'}], tags:[{slug:'main-line',name:'Main Line'}], venue:{lat:'',lng:'',name:''}, loc_tag:'main-line' },
+      { name:'PTP Select Camp — Princeton (Demo)',  permalink:'#princeton', prices:{price:49900,currency_code:'USD'}, images:[{src:'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg'}], tags:[{slug:'princeton',name:'Princeton'}], venue:{lat:'',lng:'',name:''}, loc_tag:'princeton' },
+      { name:'PTP Select Camp — Scarsdale (Demo)', permalink:'#scarsdale', prices:{price:49900,currency_code:'USD'}, images:[{src:'https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg'}], tags:[{slug:'scarsdale',name:'Scarsdale'}], venue:{lat:'',lng:'',name:''}, loc_tag:'scarsdale' }
+    ]; }
+    btnDemo.addEventListener('click', async ()=>{ currentProducts = demo(); lastUserCoords = loadCoords(); render(currentProducts,lastUserCoords); await loadMaps(); updateMap(currentProducts,lastUserCoords); setStatus('Demo loaded — layout & map verified.'); });
+
+    // Init
+    lastUserCoords = loadCoords(); loadProducts(); loadMaps();
+  })();
+  </script>
+</section>
