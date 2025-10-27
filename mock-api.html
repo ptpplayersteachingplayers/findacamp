@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mock API Server for PTP Camps</title>
+    <style>
+        body { font-family: Inter, system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .endpoint { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0; }
+        code { background: #e5e7eb; padding: 2px 4px; border-radius: 4px; }
+        pre { background: #1f2937; color: #f9fafb; padding: 16px; border-radius: 8px; overflow-x: auto; }
+        .status { padding: 8px 12px; border-radius: 4px; margin: 8px 0; }
+        .success { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .error { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Mock API Server for PTP Camps</h1>
+    
+    <p>This page serves as a mock API endpoint for testing the PTP Find a Camp component.</p>
+    
+    <div class="endpoint">
+        <h3>API Endpoint</h3>
+        <p><strong>URL:</strong> <code id="api-url">Loading...</code></p>
+        <p><strong>Method:</strong> GET</p>
+        <p><strong>Response:</strong> JSON with camp data</p>
+    </div>
+
+    <div id="status" class="status">
+        <strong>Status:</strong> <span id="status-text">Initializing...</span>
+    </div>
+
+    <h3>Sample Response</h3>
+    <pre id="sample-response">Loading...</pre>
+
+    <h3>How to Use</h3>
+    <ol>
+        <li>Copy the API URL above</li>
+        <li>In your PTP Find a Camp component, set the <code>data-endpoint</code> attribute to this URL</li>
+        <li>The component will fetch camp data from this mock API</li>
+        <li>Test all functionality: ZIP search, geolocation, filtering, etc.</li>
+    </ol>
+
+    <script>
+        // Mock camp data
+        const mockCamps = {
+            "items": [
+                {
+                    "name": "PTP Select Camp — Main Line",
+                    "permalink": "https://ptpsummercamps.com/camps/main-line",
+                    "prices": {"price": 49900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "main-line", "name": "Main Line"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "select", "name": "Select"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "main-line"
+                },
+                {
+                    "name": "PTP Select Camp — Princeton",
+                    "permalink": "https://ptpsummercamps.com/camps/princeton",
+                    "prices": {"price": 49900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "princeton", "name": "Princeton"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "select", "name": "Select"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "princeton"
+                },
+                {
+                    "name": "PTP Select Camp — Scarsdale",
+                    "permalink": "https://ptpsummercamps.com/camps/scarsdale",
+                    "prices": {"price": 49900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "scarsdale", "name": "Scarsdale"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "select", "name": "Select"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "scarsdale"
+                },
+                {
+                    "name": "PTP Elite Camp — West Chester",
+                    "permalink": "https://ptpsummercamps.com/camps/west-chester",
+                    "prices": {"price": 59900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "west-chester", "name": "West Chester"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "elite", "name": "Elite"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "west-chester"
+                },
+                {
+                    "name": "PTP Development Camp — Short Hills",
+                    "permalink": "https://ptpsummercamps.com/camps/short-hills",
+                    "prices": {"price": 39900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "short-hills", "name": "Short Hills"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "development", "name": "Development"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "short-hills"
+                },
+                {
+                    "name": "PTP Elite Camp — Hockessin",
+                    "permalink": "https://ptpsummercamps.com/camps/hockessin",
+                    "prices": {"price": 59900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "hockessin", "name": "Hockessin"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "elite", "name": "Elite"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "hockessin"
+                },
+                {
+                    "name": "PTP Select Camp — Doylestown",
+                    "permalink": "https://ptpsummercamps.com/camps/doylestown",
+                    "prices": {"price": 49900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7201-2-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "doylestown", "name": "Doylestown"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "select", "name": "Select"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "doylestown"
+                },
+                {
+                    "name": "PTP Development Camp — Ridgewood",
+                    "permalink": "https://ptpsummercamps.com/camps/ridgewood",
+                    "prices": {"price": 39900, "currency_code": "USD"},
+                    "images": [{"src": "https://ptpsummercamps.com/wp-content/uploads/2025/09/BG7A7342-scaled.jpg"}],
+                    "tags": [
+                        {"slug": "ridgewood", "name": "Ridgewood"},
+                        {"slug": "winter", "name": "Winter"},
+                        {"slug": "development", "name": "Development"}
+                    ],
+                    "venue": {"lat": "", "lng": "", "name": ""},
+                    "loc_tag": "ridgewood"
+                }
+            ]
+        };
+
+        // Display the mock data
+        document.getElementById('sample-response').textContent = JSON.stringify(mockCamps, null, 2);
+        
+        // Set up the API URL
+        const currentUrl = window.location.href;
+        const apiUrl = currentUrl + (currentUrl.includes('?') ? '&' : '?') + 'api=camps';
+        document.getElementById('api-url').textContent = apiUrl;
+
+        // Handle API requests
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('api') === 'camps') {
+            // Return JSON response
+            document.body.innerHTML = '<pre>' + JSON.stringify(mockCamps, null, 2) + '</pre>';
+            document.body.style.fontFamily = 'monospace';
+            document.body.style.fontSize = '14px';
+            document.body.style.lineHeight = '1.4';
+            document.body.style.padding = '20px';
+            document.body.style.backgroundColor = '#f8fafc';
+        } else {
+            // Show the documentation page
+            document.getElementById('status-text').textContent = 'Ready to serve mock API data';
+            document.getElementById('status').className = 'status success';
+        }
+
+        // Test the API endpoint
+        async function testApi() {
+            try {
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                if (data.items && data.items.length > 0) {
+                    document.getElementById('status-text').textContent = `API working! Serving ${data.items.length} camps`;
+                    document.getElementById('status').className = 'status success';
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                document.getElementById('status-text').textContent = `API Error: ${error.message}`;
+                document.getElementById('status').className = 'status error';
+            }
+        }
+
+        // Test the API after a short delay
+        setTimeout(testApi, 1000);
+    </script>
+</body>
+</html>
